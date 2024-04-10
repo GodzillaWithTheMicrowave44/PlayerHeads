@@ -1,0 +1,15 @@
+name: PlayerHeads
+version: '${project.version}'
+main: org.godzillawiththemicrowave.playerheads.PlayerHeads
+api-version: '1.20'
+load: STARTUP
+
+permissions:
+  playerheads.toggle:
+    description: Allows players to toggle player head dropping.
+    default: op
+
+commands:
+  toggleplayerheads:
+    description: Toggles dropping of player heads.
+    usage: /toggleplayerheads
