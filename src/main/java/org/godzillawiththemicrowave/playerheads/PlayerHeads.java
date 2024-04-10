@@ -1,7 +1,9 @@
 package org.godzillawiththemicrowave.playerheads;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -9,10 +11,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
-
+import org.jetbrains.annotations.Nullable;
 
 public class PlayerHeads extends JavaPlugin implements Listener {
 
@@ -20,15 +20,15 @@ public class PlayerHeads extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        // Registering the plugin's event listener when the plugin is enabled
         getServer().getPluginManager().registerEvents(this, this);
+        getLogger().info("PlayerHeads plugin enabled.");
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (label.equalsIgnoreCase("toggleplayerheads")) {
             // Check if the sender is not a player or if they are an OP
-            if (!(sender instanceof Player) || sender.isOp()) {
+            if (!(sender instanceof Player) || sender.isOp() || sender instanceof ConsoleCommandSender) {
                 // Toggle the flag
                 dropPlayerHeads = !dropPlayerHeads;
 
@@ -38,6 +38,10 @@ public class PlayerHeads extends JavaPlugin implements Listener {
                 } else {
                     sender.sendMessage("Player heads dropping is now disabled.");
                 }
+
+                // Debug info to server console
+                getLogger().info("Player heads dropping is now " + (dropPlayerHeads ? "enabled" : "disabled") + " by " + sender.getName());
+
                 return true;
             } else {
                 sender.sendMessage("You don't have permission to use this command.");
@@ -46,47 +50,31 @@ public class PlayerHeads extends JavaPlugin implements Listener {
         return false;
     }
 
-
-
     @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        // Retrieving the player who died
+    public void onPlayerDeath(@NotNull PlayerDeathEvent event) {
+        if (!dropPlayerHeads) return; // Check if dropping player heads is enabled
         Player player = event.getEntity();
-        // Retrieving the player who killed the player
         Player killer = player.getKiller();
 
-        // Checking if the player was killed by another player
         if (killer != null) {
-            // Getting the player head ItemStack
             ItemStack playerHead = getPlayerHead(player.getName());
 
-            // Checking if the player head exists
             if (playerHead != null) {
-                // Adding the player head to the drops
                 event.getDrops().add(playerHead);
             }
         }
     }
 
-    private ItemStack getPlayerHead(String playerName) {
-        // Creating a new ItemStack for the player head
+    private @Nullable ItemStack getPlayerHead(@NotNull String playerName) {
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-        // Getting the SkullMeta of the player head ItemStack
         SkullMeta meta = (SkullMeta) skull.getItemMeta();
-        // Setting the owning player of the player head
         meta.setOwningPlayer(getServer().getOfflinePlayer(playerName));
-        // Applying the SkullMeta to the ItemStack
         skull.setItemMeta(meta);
 
-        // Checking if the player head was successfully created
         if (meta.hasOwner()) {
-            // Returning the player head ItemStack
             return skull;
         } else {
-            // Returning null if the player head couldn't be created
             return null;
         }
     }
 }
-
-
